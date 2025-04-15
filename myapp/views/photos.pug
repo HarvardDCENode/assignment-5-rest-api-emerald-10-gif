@@ -1,0 +1,17 @@
+extends layout
+
+block content
+  h2 Earth's Spectacular Landscapes
+
+  .row
+    each photo in photos
+     .col-sm-4
+       img(src=photo.imageurl, width="250")
+       a(href='/photos/'+photo._id) Photo Details
+       p Title:  #{photo.title}
+       p Description: #{photo.description}
+       p Size: #{photo.size} | Filename: #{photo.originalname} | Uploaded: #{photo.createdAt}
+       form(action=`/photos/${photo._id}?_method=DELETE` method="POST")
+        button.btn.btn-danger(type="submit") Delete Photo
+       
+  include newphoto
