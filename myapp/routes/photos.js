@@ -1,21 +1,28 @@
-//users.js
+// import modules and setup
 var express = require('express');
 var router = express.Router();
-var multer = require('multer');
-var photoController = require('../controllers/photoController');
-var flash = require('express-flash');
-var Photo = require('../models/photoModel');
-var upload = multer({
-  storage: photoController.storage,
-  fileFilter: photoController.imageFilter
-});
+var fs = require('fs');
+var path = require('path');
 
-// flash messaging
+var multer = require('multer');
+var flash = require('express-flash');
+
+var photoController = require('../controllers/photoController');
+var Photo = require('../models/photoModel');
+const PhotoService = photoController.PhotoService;
+
+// configure Multer with storage and image filter
+var upload = multer({
+    storage: photoController.storage,
+    fileFilter: photoController.imageFilter
+  });
+
+// flash messaging middleware
 router.use(flash());
 
-//search database for photos
+//GET all photos
 router.get('/', (req, res, next)=>{
-  Photo.find({})
+  PhotoService.list({})
     .then((photos)=>{
       res.render('photos', {
         photos : photos,
@@ -27,39 +34,29 @@ router.get('/', (req, res, next)=>{
         res.end("ERROR!");
       }
     });
+    console.log("accessed via Photoservice.list")
 });
 
-router.get('/:photoid', (req, res, next)=>{
-  console.log("finding "+req.params.photoid);
-  Photo.findOne({'_id': req.params.photoid})
-    .then((photo)=>{
+//GET single photo
+router.get('/:photoid', (req, res, next) => {
+  console.log("Finding photo with ID: " + req.params.photoid);
+
+  PhotoService.read({ '_id': req.params.photoid })
+    .then((photo) => {
+      if (!photo) {
+        return res.status(404).send("Photo not found");
+      }
       res.render('updatePhoto', {
         photo: photo,
         flashMsg: req.flash("photoFindError")
       });
-    }).catch((err)=>{
+    })
+    .catch((err) => {
       if (err) console.log(err);
     });
 });
 
-//save new photos to database
-router.post('/:photoid', (req, res, next)=>{
-  Photo.findOne({'_id': req.params.photoid})
-    .then((photo)=>{
-      var data  = {
-         title: req.body.title,
-         description: req.body.description
-         }
-      photo.set(data);
-      photo.save().then(()=>{
-        res.redirect('/photos');
-      });
-    })
-    .catch((err)=>{
-      if (err) console.log(err);
-  });
-});
-
+//POST photo
 router.post('/', upload.single('image'), (req, res, next)=>{
   var path = "/img/" + req.file.filename;
   var photoData  = {
@@ -71,29 +68,53 @@ router.post('/', upload.single('image'), (req, res, next)=>{
     description: req.body.description,
     size: req.file.size / 1024 | 0
   }
-  var photo = new Photo(photoData);
-  photo.save()
+
+  PhotoService.create(photoData)
    .then(()=>{
+     console.log("Photo uploaded successfully!");
      res.redirect('/photos');
    })
    .catch((err)=>{
      if (err){
       console.log(err);
-      throw new Error("PhotoSaveError", photo); //error handling
+      throw new Error("PhotoSaveError", err); //error handling
     }
    });
 });
 
-//delete photos
+//UPDATE photos
+router.post('/:photoid', (req, res, next)=>{
+  PhotoService.read({'_id': req.params.photoid})
+    .then((photo)=>{
+      var data  = {
+         title: req.body.title,
+         description: req.body.description
+         }
+      photo.set(data);
+      photo.save().then(()=>{
+        res.redirect('/photos');
+        console.log("Photo updated successfully!")
+      });
+    })
+    .catch((err)=>{
+      if (err) console.log(err);
+  });
+});
+
+//DELETE photos
 router.delete('/:photoid', async (req, res) => {
   try {
-    const deletedPhoto = await Photo.findByIdAndDelete(req.params.photoid);
+    const deletedPhoto = await PhotoService.delete(req.params.photoid);
+    console.log("Photo deleted successfully")
     if (!deletedPhoto) {
+      console.log("No photo found to delete");
       return res.status(404).send("Photo not found");
     }
+
     res.redirect('/photos');
   } catch (err) {
-    res.status(500).send("Error deleting photo");
+    console.error("Error deleting photo:", err);
+    res.status(500).send("Server error");
   }
 });
 

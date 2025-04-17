@@ -9,6 +9,7 @@ var bodyParser = require('body-parser');
 var session = require('express-session');
 var createError = require('http-errors');
 var mongoose = require('mongoose');
+const methodOverride = require('method-override');
 require('dotenv').config();
 
 // app initialization
@@ -38,6 +39,7 @@ app.use(session({
   saveUninitialized: true,
 }));
 app.use(express.static(path.join(__dirname, 'public')));
+app.use(methodOverride('_method'));
 
 // use routes
 app.use('/', indexRouter);

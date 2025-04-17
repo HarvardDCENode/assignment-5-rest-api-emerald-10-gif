@@ -26,4 +26,4 @@ schema.pre('save', function(next){
 });
 
 // export the model with associated name and schema
-module.exports = mongoose.model("Photo", schema);
+module.exports = mongoose.model("Photo", schema, "photos2");

@@ -1,17 +1,19 @@
 extends layout
 
 block content
-  h2 Earth's Spectacular Landscapes
+  .container
+    .row
+      each photo, index in photos
+        .col-md-4.mb-4
+          .card
+            img.card-img-top(src=photo.imageurl, alt="Photo", style="width:100%; height:auto;")
+            .card-body
+              h5.card-title= photo.title
+              p.card-text= photo.description
+              p.text-muted Size: #{photo.size} KB | Filename: #{photo.originalname}
+              p.text-muted Uploaded: #{photo.createdAt.toDateString()}
+              a(href='/photos/'+photo._id) Photo Details
+              form(method="POST", action=`/photos/${photo._id}?_method=DELETE`, style="display:inline")
+                button.btn.btn-danger(type="submit") Delete Photo
 
-  .row
-    each photo in photos
-     .col-sm-4
-       img(src=photo.imageurl, width="250")
-       a(href='/photos/'+photo._id) Photo Details
-       p Title:  #{photo.title}
-       p Description: #{photo.description}
-       p Size: #{photo.size} | Filename: #{photo.originalname} | Uploaded: #{photo.createdAt}
-       form(action=`/photos/${photo._id}?_method=DELETE` method="POST")
-        button.btn.btn-danger(type="submit") Delete Photo
-       
   include newphoto

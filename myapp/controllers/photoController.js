@@ -45,25 +45,23 @@ class PhotoService {
     return photo.save();
   }
 
-  //update *error
+  //update
   static update(id, data){
     return Photo.findById(id)
       .then((photo) => {
         if (!photo) throw new Error("Photo not found");
-        console.log("data to set:", data); // debug line
-  
-        photo.set(data);  // only works if data is a plain object
+        console.log("data to set:", data);
+          photo.set(data);
         return photo.save();
       });
   }
 
   //delete
   static delete(id){
-    return Photo.deleteOne({_id: id})
-      .then((obj)=>{
-        //removed
+    return Photo.deleteOne({ _id: id })
+      .then((obj) => {
         return obj;
-      })
+      });
   }
 }
 
